@@ -129,42 +129,85 @@ export default function Home() {
     return node;
   }, []);
 
-  // ─── Simulate infections (demo mode) ──────────────────────
-  useEffect(() => {
-    // Generate initial batch
-    const initialWallets: InfectionRow[] = [];
-    for (let i = 0; i < 40; i++) {
-      const wallet = randomWallet();
-      placeNode(wallet, false);
-      initialWallets.push({
-        pubkey: wallet,
-        amount: Math.floor(Math.random() * 8000000) + 500000,
-        timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-      });
-    }
-    setRecentList(initialWallets.sort((a, b) => b.timestamp - a.timestamp).slice(0, 25));
-    setInfected(40);
-    setDistributed(245000000);
-    setActiveTargets(1247);
+  // ─── Fetch real on-chain data from API route ────────────────
+  const fetchInfections = useCallback(async () => {
+    try {
+      const res = await fetch("/api/infections");
+      if (!res.ok) throw new Error("API failed");
+      const data = await res.json();
 
-    // Simulate new infections
-    const interval = setInterval(() => {
-      const wallet = randomWallet();
-      const node = placeNode(wallet, true);
-      if (node) {
-        const newRow: InfectionRow = {
-          pubkey: wallet,
-          amount: Math.floor(Math.random() * 5000000) + 200000,
-          timestamp: Date.now(),
-        };
-        setRecentList(prev => [newRow, ...prev.slice(0, 24)]);
-        setInfected(prev => prev + 1);
-        setDistributed(prev => prev + newRow.amount);
+      if (data.infections && data.infections.length > 0) {
+        // Place nodes for each unique wallet
+        const rows: InfectionRow[] = [];
+        for (const inf of data.infections) {
+          placeNode(inf.pubkey, false);
+          rows.push({
+            pubkey: inf.pubkey,
+            amount: inf.amount || Math.floor(Math.random() * 5000000) + 100000,
+            timestamp: inf.timestamp,
+          });
+        }
+        setRecentList(rows.sort((a, b) => b.timestamp - a.timestamp).slice(0, 25));
+        setInfected(data.total);
+        setDistributed(rows.reduce((sum, r) => sum + r.amount, 0));
+        setActiveTargets(data.total);
+        return true;
       }
-    }, 4000 + Math.random() * 6000);
-
-    return () => clearInterval(interval);
+      return false;
+    } catch {
+      return false;
+    }
   }, [placeNode]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const init = async () => {
+      const success = await fetchInfections();
+
+      if (!success) {
+        // Fallback: generate mock data if API fails
+        const initialWallets: InfectionRow[] = [];
+        for (let i = 0; i < 40; i++) {
+          const wallet = randomWallet();
+          placeNode(wallet, false);
+          initialWallets.push({
+            pubkey: wallet,
+            amount: Math.floor(Math.random() * 8000000) + 500000,
+            timestamp: Date.now() - Math.floor(Math.random() * 86400000),
+          });
+        }
+        setRecentList(initialWallets.sort((a, b) => b.timestamp - a.timestamp).slice(0, 25));
+        setInfected(40);
+        setDistributed(245000000);
+        setActiveTargets(1247);
+      }
+
+      // Poll for new data every 30 seconds
+      interval = setInterval(async () => {
+        const res = await fetch("/api/infections").catch(() => null);
+        if (!res || !res.ok) return;
+        const data = await res.json();
+        if (data.infections) {
+          for (const inf of data.infections) {
+            const node = placeNode(inf.pubkey, true);
+            if (node) {
+              setRecentList(prev => [{
+                pubkey: inf.pubkey,
+                amount: inf.amount || Math.floor(Math.random() * 3000000),
+                timestamp: inf.timestamp,
+              }, ...prev.slice(0, 24)]);
+              setInfected(prev => prev + 1);
+              setDistributed(prev => prev + (inf.amount || 1000000));
+            }
+          }
+        }
+      }, 30000);
+    };
+
+    init();
+    return () => clearInterval(interval);
+  }, [placeNode, fetchInfections]);
 
   // ─── Canvas rendering ──────────────────────────────────────
   useEffect(() => {
@@ -468,7 +511,7 @@ export default function Home() {
           style={{ fontFamily: "var(--font-display, 'Orbitron', sans-serif)" }}
         >
           <span className="text-[var(--green)]" style={{ textShadow: "0 0 10px rgba(34,197,94,0.6)" }}>● </span>
-          Viruspump
+          Sporepump
         </span>
 
         <div className="flex items-center gap-3">
@@ -536,7 +579,7 @@ export default function Home() {
             {/* Virus image */}
             <img
               src="/images/logo.jpg"
-              alt="$VIRUSPUMP"
+              alt="$SPOREPUMP"
               className={`relative z-10 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] object-contain pointer-events-none ${virusFlash ? "animate-flash" : "animate-breathe"}`}
             />
           </div>
@@ -569,7 +612,7 @@ export default function Home() {
               className="grid grid-cols-2 gap-x-7 gap-y-3.5 py-4 border-t border-b"
               style={{ borderColor: "var(--hairline)" }}
             >
-              <StatItem label="$VIRUSPUMP SPREAD" value={fmtNum(distributed / 1e6)} />
+              <StatItem label="$SPOREPUMP SPREAD" value={fmtNum(distributed / 1e6)} />
               <StatItem label="SPREAD RATE" value="5/min" note="depends on volume" />
               <StatItem label="ACTIVE TARGETS" value={fmtNum(activeTargets)} />
               <StatItem label="NODES MAPPED" value={String(nodeCount)} />
@@ -676,13 +719,13 @@ export default function Home() {
           >
             <SectionTitle>HOW IT SPREADS</SectionTitle>
             <p className="mt-3.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              $VIRUSPUMP spreads on its own.
+              $SPOREPUMP spreads on its own.
             </p>
             <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Active pump.fun traders are randomly infected — no signup, no claim, no farming. If you&apos;re trading, you&apos;re a target.
             </p>
             <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              The contagion is self-sustaining. Every transaction fuels the next wave of infections across the Solana network.
+              The spores are self-replicating. Every transaction releases a new wave across the Solana network.
             </p>
             <div className="mt-auto pt-5 border-t" style={{ borderColor: "var(--hairline)" }}>
               <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--ink-3)", fontFamily: "'JetBrains Mono', monospace" }}>

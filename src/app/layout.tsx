@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://viruspumptoken.vercel.app"),
-  title: "Viruspump Token",
-  description: "A digital pathogen on the Solana blockchain. The virus is spreading.",
+  metadataBase: new URL("https://sporepump.vercel.app"),
+  title: "Sporepump | The Spores Are Spreading",
+  description: "A digital spore on the Solana blockchain. Every buy is an infection. There is no cure.",
   icons: { icon: "/images/logo.jpg" },
 };
 
