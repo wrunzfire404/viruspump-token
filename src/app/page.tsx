@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ─── Constants ───────────────────────────────────────────────
-const TOKEN_CA = "9bSZhZFAeREPhpAto5P6H4WXUNutWJTQkvporCPXpump";
+const TOKEN_CA = "AbmWpqgZRii6B5Y1z9ABJNig9iAsKoVHqFBQz3vopump";
 const TWITTER_URL = "https://x.com/viruspumptoken";
 const PUMP_FUN_URL = `https://pump.fun/coin/${TOKEN_CA}`;
 const NODE_CAP = 800;
@@ -578,7 +578,7 @@ export default function Home() {
             />
             {/* Virus image */}
             <img
-              src="/images/logo.jpg"
+              src="/images/logo_nobg.jpg"
               alt="$SPOREPUMP"
               className={`relative z-10 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] object-contain pointer-events-none ${virusFlash ? "animate-flash" : "animate-breathe"}`}
             />
