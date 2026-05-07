@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const TOKEN_CA = "9bSZhZFAeREPhpAto5P6H4WXUNutWJTQkvporCPXpump";
+const TOKEN_CA = "AbmWpqgZRii6B5Y1z9ABJNig9iAsKoVHqFBQz3vopump";
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
 const HELIUS_API = `https://api.helius.xyz/v0`;
 

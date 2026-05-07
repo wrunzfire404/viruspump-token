@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ─── Constants ───────────────────────────────────────────────
-const TOKEN_CA = "9bSZhZFAeREPhpAto5P6H4WXUNutWJTQkvporCPXpump";
-const TWITTER_URL = "https://x.com/viruspumptoken";
+const TOKEN_CA = "AbmWpqgZRii6B5Y1z9ABJNig9iAsKoVHqFBQz3vopump";
+const TWITTER_URL = "https://x.com/Sporepump";
 const PUMP_FUN_URL = `https://pump.fun/coin/${TOKEN_CA}`;
 const NODE_CAP = 800;
 const RIPPLE_LIFE_MS = 1500;
