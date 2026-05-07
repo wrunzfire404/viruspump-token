@@ -691,13 +691,13 @@ export default function Home() {
           >
             <SectionTitle>HOW IT SPREADS</SectionTitle>
             <p className="mt-3.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              $SPOREPUMP spreads on its own.
+              Digital organism that propagates itself on Solana.
             </p>
             <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
               Active pump.fun traders are randomly infected — no signup, no claim, no farming. If you&apos;re trading, you&apos;re a target.
             </p>
             <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
-              The spores are self-replicating. Every transaction releases a new wave across the Solana network.
+              Every transaction releases a new wave across the network. There is no cure.
             </p>
             <div className="mt-auto pt-5 border-t" style={{ borderColor: "var(--hairline)" }}>
               <p className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--ink-3)", fontFamily: "'JetBrains Mono', monospace" }}>

@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://sporepump.vercel.app"),
   title: "Sporepump | The Spores Are Spreading",
-  description: "A digital spore on the Solana blockchain. Every buy is an infection. There is no cure.",
+  description: "Digital organism that propagates itself on Solana.",
   icons: { icon: "/images/logo_nobg.png" },
 };
 
