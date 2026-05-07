@@ -584,7 +584,7 @@ export default function Home() {
               className="grid grid-cols-2 gap-x-7 gap-y-3.5 py-4 border-t border-b"
               style={{ borderColor: "var(--hairline)" }}
             >
-              <StatItem label="$SPOREPUMP SPREAD" value={fmtNum(distributed / 1e6)} />
+              <StatItem label="$SPOREPUMP SPREAD" value={fmtNum(distributed)} />
               <StatItem label="SPREAD RATE" value="5/min" note="depends on volume" />
               <StatItem label="ACTIVE TARGETS" value={fmtNum(activeTargets)} />
               <StatItem label="NODES MAPPED" value={String(nodeCount)} />
@@ -632,7 +632,7 @@ export default function Home() {
                       {shortAddr(row.pubkey)}
                     </a>
                     <span style={{ color: "var(--ink)", fontWeight: 500 }}>
-                      {fmtNum(row.amount / 1e6)}
+                      {fmtNum(row.amount)}
                     </span>
                     <span style={{ color: "var(--ink-3)", fontSize: "10px" }}>
                       {fmtAge(row.timestamp)}

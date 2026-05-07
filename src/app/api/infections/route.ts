@@ -4,6 +4,12 @@ const TOKEN_CA = "9bSZhZFAeREPhpAto5P6H4WXUNutWJTQkvporCPXpump";
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
 const HELIUS_API = `https://api.helius.xyz/v0`;
 
+// Known pool/AMM addresses to exclude (not real buyers)
+const EXCLUDED_WALLETS = new Set([
+  TOKEN_CA,
+  "11111111111111111111111111111111",
+]);
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -19,70 +25,56 @@ interface HeliusTx {
   timestamp: number;
   feePayer: string;
   type: string;
-  description?: string;
   tokenTransfers?: TokenTransfer[];
-  nativeTransfers?: Array<{
-    fromUserAccount: string;
-    toUserAccount: string;
-    amount: number;
-  }>;
 }
 
 export async function GET() {
   if (!HELIUS_API_KEY) {
-    return NextResponse.json(
-      { error: "Helius API key not configured", infections: [], total: 0 },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      error: "HELIUS_API_KEY not set. Add it in Vercel Environment Variables.",
+      infections: [],
+      total: 0,
+    });
   }
 
   try {
-    const response = await fetch(
-      `${HELIUS_API}/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_API_KEY}&limit=50`,
-      { headers: { "Content-Type": "application/json" } }
-    );
+    const url = `${HELIUS_API}/addresses/${TOKEN_CA}/transactions?api-key=${HELIUS_API_KEY}&limit=50`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Helius API error:", response.status, errText);
-      return NextResponse.json(
-        { error: "Helius API error", infections: [], total: 0 },
-        { status: 200 }
-      );
+      return NextResponse.json({
+        error: `Helius returned ${response.status}: ${errText.slice(0, 200)}`,
+        infections: [],
+        total: 0,
+      });
     }
 
     const transactions: HeliusTx[] = await response.json();
 
-    // Parse: every SWAP tx on this token address = someone interacted with the token
-    // The feePayer is the wallet that initiated the swap (buyer/seller)
     const infections = transactions
       .filter((tx) => tx.type === "SWAP" || tx.type === "TRANSFER")
       .map((tx) => {
-        let wallet = tx.feePayer;
+        // feePayer = the wallet that initiated the swap (the actual buyer/seller)
+        const wallet = tx.feePayer;
         let amount = 0;
 
-        // Try to find the actual token transfer amount for our mint
+        // Find token amount for our specific mint
         if (tx.tokenTransfers && tx.tokenTransfers.length > 0) {
-          const tokenTx = tx.tokenTransfers.find(
-            (t) => t.mint === TOKEN_CA
-          );
+          const tokenTx = tx.tokenTransfers.find((t) => t.mint === TOKEN_CA);
           if (tokenTx) {
-            // The receiver of the token is the "infected" wallet
-            wallet = tokenTx.toUserAccount || tx.feePayer;
             amount = tokenTx.tokenAmount || 0;
           }
         }
 
-        // If no specific token transfer found, still use feePayer
-        // because they interacted with this token's address
         return {
           pubkey: wallet,
-          amount: Math.round(amount * 1e6), // normalize to raw units
+          amount: Math.round(amount),
           timestamp: tx.timestamp * 1000,
           signature: tx.signature,
         };
       })
-      .filter((inf) => inf.pubkey && inf.pubkey !== TOKEN_CA);
+      .filter((inf) => inf.pubkey && !EXCLUDED_WALLETS.has(inf.pubkey));
 
     // Deduplicate by wallet (keep most recent)
     const seen = new Set<string>();
@@ -99,10 +91,11 @@ export async function GET() {
       fetchedAt: Date.now(),
     });
   } catch (error) {
-    console.error("API route error:", error);
-    return NextResponse.json(
-      { error: "Internal server error", infections: [], total: 0 },
-      { status: 200 }
-    );
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({
+      error: `Server error: ${msg}`,
+      infections: [],
+      total: 0,
+    });
   }
 }
