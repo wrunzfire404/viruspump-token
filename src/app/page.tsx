@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ─── Constants ───────────────────────────────────────────────
-const TOKEN_CA = "AbmWpqgZRii6B5Y1z9ABJNig9iAsKoVHqFBQz3vopump";
+const TOKEN_CA = "9bSZhZFAeREPhpAto5P6H4WXUNutWJTQkvporCPXpump";
 const TWITTER_URL = "https://x.com/viruspumptoken";
 const PUMP_FUN_URL = `https://pump.fun/coin/${TOKEN_CA}`;
 const NODE_CAP = 800;
@@ -38,12 +38,6 @@ function hashPubkey(pk: string): number {
     h = (h * 16777619) >>> 0;
   }
   return h;
-}
-
-// Generate random wallet-like string
-function randomWallet(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from({ length: 44 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
 // ─── Types ───────────────────────────────────────────────────
@@ -143,7 +137,7 @@ export default function Home() {
           placeNode(inf.pubkey, false);
           rows.push({
             pubkey: inf.pubkey,
-            amount: inf.amount || Math.floor(Math.random() * 5000000) + 100000,
+            amount: inf.amount || 0,
             timestamp: inf.timestamp,
           });
         }
@@ -160,52 +154,30 @@ export default function Home() {
   }, [placeNode]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    // Initial fetch
+    fetchInfections();
 
-    const init = async () => {
-      const success = await fetchInfections();
-
-      if (!success) {
-        // Fallback: generate mock data if API fails
-        const initialWallets: InfectionRow[] = [];
-        for (let i = 0; i < 40; i++) {
-          const wallet = randomWallet();
-          placeNode(wallet, false);
-          initialWallets.push({
-            pubkey: wallet,
-            amount: Math.floor(Math.random() * 8000000) + 500000,
-            timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-          });
-        }
-        setRecentList(initialWallets.sort((a, b) => b.timestamp - a.timestamp).slice(0, 25));
-        setInfected(40);
-        setDistributed(245000000);
-        setActiveTargets(1247);
-      }
-
-      // Poll for new data every 30 seconds
-      interval = setInterval(async () => {
-        const res = await fetch("/api/infections").catch(() => null);
-        if (!res || !res.ok) return;
-        const data = await res.json();
-        if (data.infections) {
-          for (const inf of data.infections) {
-            const node = placeNode(inf.pubkey, true);
-            if (node) {
-              setRecentList(prev => [{
-                pubkey: inf.pubkey,
-                amount: inf.amount || Math.floor(Math.random() * 3000000),
-                timestamp: inf.timestamp,
-              }, ...prev.slice(0, 24)]);
-              setInfected(prev => prev + 1);
-              setDistributed(prev => prev + (inf.amount || 1000000));
-            }
+    // Poll for new data every 30 seconds
+    const interval = setInterval(async () => {
+      const res = await fetch("/api/infections").catch(() => null);
+      if (!res || !res.ok) return;
+      const data = await res.json();
+      if (data.infections) {
+        for (const inf of data.infections) {
+          const node = placeNode(inf.pubkey, true);
+          if (node) {
+            setRecentList(prev => [{
+              pubkey: inf.pubkey,
+              amount: inf.amount || 0,
+              timestamp: inf.timestamp,
+            }, ...prev.slice(0, 24)]);
+            setInfected(prev => prev + 1);
+            setDistributed(prev => prev + (inf.amount || 0));
           }
         }
-      }, 30000);
-    };
+      }
+    }, 30000);
 
-    init();
     return () => clearInterval(interval);
   }, [placeNode, fetchInfections]);
 
@@ -578,7 +550,7 @@ export default function Home() {
             />
             {/* Virus image */}
             <img
-              src="/images/logo_nobg.jpg"
+              src="/images/logo_nobg.png"
               alt="$SPOREPUMP"
               className={`relative z-10 w-[240px] h-[240px] lg:w-[380px] lg:h-[380px] object-contain pointer-events-none ${virusFlash ? "animate-flash" : "animate-breathe"}`}
             />
